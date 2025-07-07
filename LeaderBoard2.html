@@ -67,7 +67,7 @@
   </tbody>
 </table>
 
- <script>
+<script>
   const db = firebase.firestore();
   const auth = firebase.auth();
 
@@ -75,53 +75,47 @@
     if (!user) {
       window.location.href = "index.html";
       return;
-    }
+    }https://github.com/dimontei/Tour/blob/main/LeaderBoard2.html
 
     const tableBody = document.querySelector('#leaderboardTable tbody');
-    const userPointsMap = {};
 
     try {
-      // Step 1: Get all stages (picks collection)
-      const stagesSnapshot = await db.collection('picks').get();
+      const picksSnapshot = await db.collection('picks').get();
+      console.log("📦 Found stages:", picksSnapshot.size);
 
-      for (const stageDoc of stagesSnapshot.docs) {
+      const userPointsMap = {};
+
+      for (const stageDoc of picksSnapshot.docs) {
         const stageId = stageDoc.id;
+        console.log("🔎 Checking stage:", stageId);
 
-        // Step 2: For each stage, fetch the users subcollection
         const usersSnapshot = await db.collection(`picks/${stageId}/users`).get();
+        console.log(`👤 Users in stage ${stageId}:`, usersSnapshot.size);
 
         usersSnapshot.forEach(doc => {
           const data = doc.data();
+          console.log("➡️ User data:", data);
+
           const name = data.name || 'Anonymous';
           const points = data.points || 0;
 
           if (!userPointsMap[name]) {
             userPointsMap[name] = 0;
           }
-
           userPointsMap[name] += points;
         });
       }
 
-      // Step 3: Convert to table
-      const sortedUsers = Object.entries(userPointsMap).sort((a, b) => b[1] - a[1]);
+      const sorted = Object.entries(userPointsMap).sort((a, b) => b[1] - a[1]);
 
-      if (sortedUsers.length === 0) {
+      if (sorted.length === 0) {
         tableBody.innerHTML = '<tr><td colspan="2">No points data found.</td></tr>';
         return;
       }
 
-      sortedUsers.forEach(([name, points]) => {
+      sorted.forEach(([name, points]) => {
         const row = document.createElement('tr');
-
-        const nameCell = document.createElement('td');
-        nameCell.textContent = name;
-
-        const pointsCell = document.createElement('td');
-        pointsCell.textContent = points;
-
-        row.appendChild(nameCell);
-        row.appendChild(pointsCell);
+        row.innerHTML = `<td>${name}</td><td>${points}</td>`;
         tableBody.appendChild(row);
       });
 
