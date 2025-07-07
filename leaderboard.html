@@ -146,7 +146,7 @@
     const stagesSnapshot = await db.collection("picks").doc().get();
     console.log("Stages found:", stagesSnapshot.size);
     
-stagesSnapshot.forEach(doc => console.log("Stage ID:", doc.id));
+//stagesSnapshot.forEach(doc => console.log("Stage ID:", doc.id));
 
     if (stagesSnapshot.empty) {
       board.innerHTML = `<tr><td colspan="4">No stage data found.</td></tr>`;
