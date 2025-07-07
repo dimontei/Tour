@@ -149,10 +149,8 @@
       return;
     }
     
-  picksSnapshot.forEach(doc => console.log("Stage ID:", doc.id));
 
-
-    for (const stageDoc of picksSnapshot.docs) {
+    for (const stageDoc of picksSnapshot.collection) {
       const stageId = stageDoc.id;
       const usersSnapshot = await db.collection("picks").doc(stageId).collection("users").get();
 
