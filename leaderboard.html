@@ -142,7 +142,7 @@
     const scores = {};
 
     // Fetch all stage documents under "picks"
-    const picksSnapshot = await db.collection("picks").get();
+    const picksSnapshot = await db.collection("picks").doc('Stage1').get();
 
     if (picksSnapshot.empty) {
       board.innerHTML = `<tr><td colspan="3">No stage data found.</td></tr>`;
