@@ -104,13 +104,20 @@
     auth.onAuthStateChanged(user => {
       if (!user) window.location.href = "index.html";
 
+ 
       const form = document.getElementById('pickForm');
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const cyclist = document.getElementById('cyclist').value;
         const today = new Date().toISOString().split('T')[0];
 
-        await db.collection('picks').doc(today).collection('users').doc(user.uid).set({
+
+      if (!cyclist || !user) {
+        alert("Please enter a cyclist and ensure you're logged in.");
+        return;
+      }
+
+        await db.collection('picks').doc('Stage1').collection('users').doc(user.uid).set({
           name: user.displayName,
           cyclist: cyclist,
           timestamp: firebase.firestore.FieldValue.serverTimestamp()
