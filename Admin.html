@@ -37,7 +37,7 @@ async function loadStageOptions() {
     const auth = firebase.auth();
 
     // Optional: restrict access only to admin user
-    const ADMIN_EMAIL = "youradmin@email.com";
+    const ADMIN_EMAIL = "diogo.momteiro@gmail.com";
 
     auth.onAuthStateChanged(user => {
       if (!user || user.email !== ADMIN_EMAIL) {
