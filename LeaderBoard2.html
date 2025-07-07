@@ -81,12 +81,16 @@
     const userPointsMap = {};
 
     try {
-      const picksCollection = await db.collection('picks').get();
+      // Step 1: Get all stages (picks collection)
+      const stagesSnapshot = await db.collection('picks').get();
 
-      for (const stageDoc of picksCollection.docs) {
-        const usersSnap = await db.collection('picks').doc(stageDoc.id).collection('users').get();
+      for (const stageDoc of stagesSnapshot.docs) {
+        const stageId = stageDoc.id;
 
-        usersSnap.forEach(doc => {
+        // Step 2: For each stage, fetch the users subcollection
+        const usersSnapshot = await db.collection(`picks/${stageId}/users`).get();
+
+        usersSnapshot.forEach(doc => {
           const data = doc.data();
           const name = data.name || 'Anonymous';
           const points = data.points || 0;
@@ -99,9 +103,13 @@
         });
       }
 
-      // Convert to sorted array
-      const sortedUsers = Object.entries(userPointsMap)
-        .sort((a, b) => b[1] - a[1]); // Descending order
+      // Step 3: Convert to table
+      const sortedUsers = Object.entries(userPointsMap).sort((a, b) => b[1] - a[1]);
+
+      if (sortedUsers.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="2">No points data found.</td></tr>';
+        return;
+      }
 
       sortedUsers.forEach(([name, points]) => {
         const row = document.createElement('tr');
@@ -117,12 +125,8 @@
         tableBody.appendChild(row);
       });
 
-      if (sortedUsers.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="2">No points data found.</td></tr>';
-      }
-
     } catch (error) {
-      console.error("Error loading leaderboard:", error);
+      console.error("🔥 Error loading leaderboard:", error);
       tableBody.innerHTML = '<tr><td colspan="2">Error loading leaderboard data.</td></tr>';
     }
   });
