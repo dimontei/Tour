@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Make Your Pick</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
+  <script src="firebase-config.js"></script>
+</head>
+<body>
+  <h1>Pick the Stage Winner</h1>
+  <form id="pickForm">
+    <label for="cyclist">Cyclist Name:</label>
+    <input type="text" id="cyclist" required />
+    <button type="submit">Submit Pick</button>
+  </form>
+
+  <script>
+    const db = firebase.firestore();
+    const auth = firebase.auth();
+
+    auth.onAuthStateChanged(user => {
+      if (!user) window.location.href = "index.html";
+
+      const form = document.getElementById('pickForm');
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const cyclist = document.getElementById('cyclist').value;
+        const today = new Date().toISOString().split('T')[0];
+
+        await db.collection('picks').doc(today).collection('users').doc(user.uid).set({
+          name: user.displayName,
+          cyclist: cyclist,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        alert("Pick submitted!");
+        form.reset();
+      });
+    });
+  </script>
+</body>
+</html>
