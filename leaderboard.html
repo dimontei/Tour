@@ -143,7 +143,7 @@
     const correctCounts = {};
 
     // Get all stage documents
-    const stagesSnapshot = await db.collection("picks").get();
+    const stagesSnapshot = await db.collection("picks").doc().get();
     console.log("Stages found:", stagesSnapshot.size);
     
 stagesSnapshot.forEach(doc => console.log("Stage ID:", doc.id));
