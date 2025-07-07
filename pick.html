@@ -24,9 +24,72 @@
   .leaderboard-btn:hover {
     background-color: #fbc02d;
   }
+  .back-button {
+      display: inline-flex;
+      align-items: center;
+      margin-bottom: 25px;
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      text-decoration: none;
+      border-radius: 50px;
+      font-size: 16px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .back-button::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s;
+    }
+    
+    .back-button:hover::before {
+      left: 100%;
+    }
+    
+    .back-button:hover {
+      background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+      transform: translateY(-2px);
+    }
+    
+    .back-button:active {
+      transform: translateY(0);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+    }
+    
+    .back-button .icon {
+      margin-right: 8px;
+      font-size: 18px;
+      transition: transform 0.3s ease;
+    }
+    
+    .back-button:hover .icon {
+      transform: translateX(-3px);
+    }
+    
+    .back-button .text {
+      position: relative;
+      z-index: 1;
+    }
 </style>
 </head>
 <body>
+  <a href="index.html" class="back-button">
+    <span class="icon">←</span>
+    <span class="text">Back to Home</span>
+  </a>
   <h1>Pick the Stage Winner</h1>
   <form id="pickForm">
     <label for="cyclist">Cyclist Name:</label>
