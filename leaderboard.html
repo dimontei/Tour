@@ -2,103 +2,103 @@
 <html>
 <head>
   <title>Leaderboard</title>
-  <link rel="stylesheet" href="style.css" />
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script src="firebase-config.js"></script>
   <style>
-    .back-button {
-      display: inline-flex;
-      align-items: center;
-      margin-bottom: 25px;
-      padding: 12px 24px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      text-decoration: none;
-      border-radius: 50px;
-      font-size: 16px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f9f9f9;
     }
-    
-    .back-button::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: -100%;
+
+    h1 {
+      text-align: center;
+    }
+
+    table {
       width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-      transition: left 0.5s;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: white;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     }
-    
-    .back-button:hover::before {
-      left: 100%;
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
     }
-    
-    .back-button:hover {
-      background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
-      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
-      transform: translateY(-2px);
+
+    th {
+      background-color: #f2f2f2;
     }
-    
-    .back-button:active {
-      transform: translateY(0);
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
-    }
-    
-    .back-button .icon {
-      margin-right: 8px;
-      font-size: 18px;
-      transition: transform 0.3s ease;
-    }
-    
-    .back-button:hover .icon {
-      transform: translateX(-3px);
-    }
-    
-    .back-button .text {
-      position: relative;
-      z-index: 1;
+
+    tr:hover {
+      background-color: #f1f1f1;
     }
   </style>
 </head>
 <body>
-  <a href="index.html" class="back-button">
-    <span class="icon">←</span>
-    <span class="text">Back to Home</span>
-  </a>
-  <h1>Leaderboard</h1>
-  <ul id="board"></ul>
+  <h1>🏆 Tour de France Leaderboard</h1>
+  <table>
+    <thead>
+      <tr>
+        <th>Position</th>
+        <th>User</th>
+        <th>Correct Picks</th>
+        <th>Total Points</th>
+      </tr>
+    </thead>
+    <tbody id="leaderboard-body"></tbody>
+  </table>
 
   <script>
     const db = firebase.firestore();
-    const board = document.getElementById('board');
+    const board = document.getElementById('leaderboard-body');
 
     async function loadLeaderboard() {
       const scores = {};
-      const stages = await db.collection('stages').get();
-      for (let stage of stages.docs) {
-        const winner = stage.data().winner;
-        const stageId = stage.id;
-        const picks = await db.collection('picks').doc(stageId).collection('users').get();
+      const correctCounts = {};
 
-        picks.forEach(doc => {
-          const { name, cyclist } = doc.data();
+      const stagesSnapshot = await db.collection('stages').get();
+
+      for (const stageDoc of stagesSnapshot.docs) {
+        const stageId = stageDoc.id;
+        const winner = stageDoc.data().winner;
+
+        const picksSnapshot = await db.collection('picks').doc(stageId).collection('users').get();
+
+        picksSnapshot.forEach(doc => {
+          const data = doc.data();
+          const { name, cyclist, points = 1 } = data;
+
           if (!scores[name]) scores[name] = 0;
-          if (cyclist.toLowerCase() === winner.toLowerCase()) {
-            scores[name] += doc.data().points || 1; // fallback to 1 if no custom points
+          if (!correctCounts[name]) correctCounts[name] = 0;
+
+          if (cyclist && winner && cyclist.toLowerCase() === winner.toLowerCase()) {
+            scores[name] += points;
+            correctCounts[name]++;
           }
         });
       }
 
-      const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
-      board.innerHTML = sorted.map(([name, score]) => `<li>${name}: ${score}</li>`).join('');
+      const result = Object.entries(scores)
+        .map(([name, totalPoints]) => ({
+          name,
+          points: totalPoints,
+          correct: correctCounts[name] || 0
+        }))
+        .sort((a, b) => b.points - a.points);
+
+      board.innerHTML = result.map((user, index) => `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${user.name}</td>
+          <td>${user.correct}</td>
+          <td>${user.points}</td>
+        </tr>
+      `).join('');
     }
 
     loadLeaderboard();
