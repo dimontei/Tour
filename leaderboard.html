@@ -145,6 +145,9 @@
     // Get all stage documents
     const stagesSnapshot = await db.collection("picks").get();
     console.log("Stages found:", stagesSnapshot.size);
+    
+stagesSnapshot.forEach(doc => console.log("Stage ID:", doc.id));
+
     if (stagesSnapshot.empty) {
       board.innerHTML = `<tr><td colspan="4">No stage data found.</td></tr>`;
       return;
