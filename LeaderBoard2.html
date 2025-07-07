@@ -68,24 +68,21 @@
 </table>
 
 <script>
-  const db = firebase.firestore();
-  const auth = firebase.auth();
-
-  auth.onAuthStateChanged(async user => {
+  firebase.auth().onAuthStateChanged(async function(user) {
     if (!user) {
       window.location.href = "index.html";
       return;
-    }https://github.com/dimontei/Tour/blob/main/LeaderBoard2.html
+    }
 
+    const db = firebase.firestore();
     const tableBody = document.querySelector('#leaderboardTable tbody');
+    const userPointsMap = {};
 
     try {
       const picksSnapshot = await db.collection('picks').get();
       console.log("📦 Found stages:", picksSnapshot.size);
 
-      const userPointsMap = {};
-
-      for (const stageDoc of picksSnapshot.docs) {
+      for (let stageDoc of picksSnapshot.docs) {
         const stageId = stageDoc.id;
         console.log("🔎 Checking stage:", stageId);
 
@@ -119,8 +116,8 @@
         tableBody.appendChild(row);
       });
 
-    } catch (error) {
-      console.error("🔥 Error loading leaderboard:", error);
+    } catch (err) {
+      console.error("🔥 Error loading leaderboard:", err);
       tableBody.innerHTML = '<tr><td colspan="2">Error loading leaderboard data.</td></tr>';
     }
   });
