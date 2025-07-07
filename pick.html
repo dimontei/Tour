@@ -120,7 +120,8 @@
         await db.collection('picks').doc(today).collection('users').doc(user.uid).set({
           name: user.displayName,
           cyclist: cyclist,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+          Points: 0
         });
 
         alert("Pick submitted!");
