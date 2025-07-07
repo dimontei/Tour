@@ -117,7 +117,7 @@
         return;
       }
 
-        await db.collection('picks').doc('Stage1').collection('users').doc(user.uid).set({
+        await db.collection('picks').doc(today).collection('users').doc(user.uid).set({
           name: user.displayName,
           cyclist: cyclist,
           timestamp: firebase.firestore.FieldValue.serverTimestamp()
