@@ -148,6 +148,9 @@
       board.innerHTML = `<tr><td colspan="3">No stage data found.</td></tr>`;
       return;
     }
+    
+  picksSnapshot.forEach(doc => console.log("Stage ID:", doc.id));
+
 
     for (const stageDoc of picksSnapshot.docs) {
       const stageId = stageDoc.id;
