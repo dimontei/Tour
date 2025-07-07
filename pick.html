@@ -4,9 +4,27 @@
   <title>Make Your Pick</title>
   <link rel="stylesheet" href="style.css" />
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script src="firebase-config.js"></script>
+  <style>
+  .leaderboard-btn {
+    background-color: #fdd835;
+    color: #000;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: background-color 0.3s ease;
+  }
+
+  .leaderboard-btn:hover {
+    background-color: #fbc02d;
+  }
+</style>
 </head>
 <body>
   <h1>Pick the Stage Winner</h1>
@@ -40,5 +58,12 @@
       });
     });
   </script>
+  <!-- Leaderboard Button -->
+<button id="leaderboard-btn" class="leaderboard-btn">🏆 View Leaderboard</button>
+   <script>
+     document.getElementById("leaderboard-btn").addEventListener("click", function () {
+  window.location.href = "leaderboard.html";
+});
+      </script>
 </body>
 </html>
