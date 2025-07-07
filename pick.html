@@ -118,7 +118,7 @@
     async function submitPick(event) {
       event.preventDefault(); // prevent page reload
 
-      const stageId = getTodayDate();
+      const stageId = 'Stage1';//getTodayDate();
       const cyclist = document.getElementById("cyclist").value.trim();
       const user = firebase.auth().currentUser;
 
