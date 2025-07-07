@@ -11,50 +11,190 @@
     body {
       font-family: Arial, sans-serif;
       text-align: center;
-      margin-top: 100px;
-      background: #f7f7f7;
+      margin: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
     }
-
-    h1 {
-      font-size: 28px;
+    
+    .container {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(10px);
+    }
+    
+    .tour-image {
+      width: 100%;
+      max-width: 400px;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 15px;
       margin-bottom: 30px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      transition: transform 0.3s ease;
     }
-
+    
+    .tour-image:hover {
+      transform: scale(1.05);
+    }
+    
+    h1 {
+      font-size: 32px;
+      margin-bottom: 20px;
+      color: #333;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .subtitle {
+      font-size: 18px;
+      color: #666;
+      margin-bottom: 30px;
+      font-weight: 300;
+    }
+    
     .google-btn {
       display: inline-flex;
       align-items: center;
-      gap: 10px;
-      padding: 12px 20px;
+      gap: 12px;
+      padding: 15px 30px;
       border: none;
       background-color: white;
-      border-radius: 6px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      border-radius: 50px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
       cursor: pointer;
       font-size: 16px;
-      font-weight: 500;
+      font-weight: 600;
       transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      position: relative;
+      overflow: hidden;
     }
-
+    
+    .google-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+      transition: left 0.5s;
+    }
+    
+    .google-btn:hover::before {
+      left: 100%;
+    }
+    
     .google-btn img {
+      width: 24px;
+      height: 24px;
+    }
+    
+    .google-btn:hover {
+      box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+      transform: translateY(-2px);
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+    }
+    
+    .google-btn:active {
+      transform: translateY(0);
+    }
+    
+    .features {
+      margin-top: 30px;
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    
+    .feature {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #666;
+      font-size: 14px;
+    }
+    
+    .feature-icon {
       width: 20px;
       height: 20px;
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
     }
-
-    .google-btn:hover {
-      box-shadow: 0 4px 6px rgba(0,0,0,0.25);
-      transform: scale(1.02);
+    
+    @media (max-width: 600px) {
+      .container {
+        padding: 30px 20px;
+      }
+      
+      h1 {
+        font-size: 24px;
+      }
+      
+      .tour-image {
+        height: 150px;
+      }
+      
+      .features {
+        flex-direction: column;
+        align-items: center;
+      }
     }
   </style>
 </head>
 <body>
-  <h1>Lateiros Tour de France Predictor</h1>
-  <!-- Fancier Google Login Button --> 
-<button id="login-btn" class="google-btn">
-  <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo" />
-  <span>Sign in with Google</span>
-</button>
+  <div class="container">
+    <!-- Tour de France Image -->
+    <img src="https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+         alt="Tour de France Cyclists" 
+         class="tour-image" 
+         onerror="this.src='https://images.unsplash.com/photo-1571068316344-75bc76f77890?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'; this.onerror=null;" />
+    
+    <h1>Lateiros Tour de France Predictor</h1>
+    <p class="subtitle">Predict stage winners and compete with friends!</p>
+    
+    <!-- Fancier Google Login Button --> 
+    <button id="login-btn" class="google-btn">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo" />
+      <span>Sign in with Google</span>
+    </button>
+    
+    <!-- Features Section -->
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon">🚴</div>
+        <span>Daily Predictions</span>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">🏆</div>
+        <span>Leaderboards</span>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">👥</div>
+        <span>Compete with Friends</span>
+      </div>
+    </div>
+  </div>
  
-
   <script>
     // Google login function
     document.getElementById("login-btn").addEventListener("click", function () {
