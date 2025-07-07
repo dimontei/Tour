@@ -98,28 +98,39 @@
   </form>
 
   <script>
-    const db = firebase.firestore();
-    const auth = firebase.auth();
+   async function submitPick() {
+  const stageId = getTodayDate(); // or dropdown
+  const cyclist = document.getElementById("cyclist").value.trim();
+  const user = firebase.auth().currentUser;
 
-    auth.onAuthStateChanged(user => {
-      if (!user) window.location.href = "index.html";
+  if (!cyclist || !user) {
+    alert("Please enter a cyclist and login.");
+    return;
+  }
 
-      const form = document.getElementById('pickForm');
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const cyclist = document.getElementById('cyclist').value;
-        const today = new Date().toISOString().split('T')[0];
+  const userRef = db.collection("picks").doc(stageId).collection("users").doc(user.uid);
 
-        await db.collection('picks').doc(today).collection('users').doc(user.uid).set({
-          name: user.displayName,
-          cyclist: cyclist,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        });
+  // Check if this cyclist has already been picked by someone else
+  const picksSnapshot = await db.collection("picks").doc(stageId).collection("users").get();
+  const alreadyPicked = picksSnapshot.docs.some(doc => {
+    const data = doc.data();
+    return data.cyclist.toLowerCase() === cyclist.toLowerCase() && doc.id !== user.uid;
+  });
 
-        alert("Pick submitted!");
-        form.reset();
-      });
-    });
+  if (alreadyPicked) {
+    alert(`${cyclist} has already been picked by another user for this stage.`);
+    return;
+  }
+
+  // Save the user's pick
+  await userRef.set({
+    name: user.displayName,
+    cyclist: cyclist,
+    points: 0 // default
+  });
+
+  alert("Pick saved!");
+}
   </script>
   <!-- Leaderboard Button -->
 <button id="leaderboard-btn" class="leaderboard-btn">🏆 View Leaderboard</button>
