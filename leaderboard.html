@@ -132,64 +132,67 @@
     <tbody id="leaderboard-body"></tbody>
   </table>
 
-  <script>
-    const db = firebase.firestore();
-    const board = document.getElementById('leaderboard-body');
+ <script>
+const db = firebase.firestore();
+const board = document.getElementById('leaderboard-body');
 
-   async function loadLeaderboard() {
+async function loadLeaderboard() {
   const scores = {};
-  const correctCounts = {};
 
-  const stagesSnapshot = await db.collection('picks').get();
+  try {
+    const stagesSnapshot = await db.collection('picks').get();
+    console.log("Found stages:", stagesSnapshot.size);
 
-  for (const stageDoc of stagesSnapshot.docs) {
-    const stageId = stageDoc.id;
+    for (const stageDoc of stagesSnapshot.docs) {
+      const stageId = stageDoc.id;
+      console.log("Reading picks for stage:", stageId);
 
-    const usersSnapshot = await db.collection('picks').doc(stageId).collection('users').get();
-    usersSnapshot.forEach(doc => {
-      const data = doc.data();
-      const { name, points = 0 } = data;
+      const usersSnapshot = await db.collection('picks').doc(stageId).collection('users').get();
+      console.log(`Stage ${stageId} - Found ${usersSnapshot.size} user picks`);
 
-      if (!scores[name]) scores[name] = 0;
-      scores[name] += points;
-    });
-  }
+      usersSnapshot.forEach(doc => {
+        const data = doc.data();
+        const { name, points = 0 } = data;
 
-  const result = Object.entries(scores)
-    .map(([name, totalPoints]) => ({
-      name,
-      points: totalPoints,
-      correct: "N/A" // Optional: remove this if you're not tracking correct picks
-    }))
-    .sort((a, b) => b.points - a.points);
+        if (!name) {
+          console.warn("Missing name in document:", doc.id);
+          return;
+        }
 
-  board.innerHTML = result.map((user, index) => `
-   <tr>
-    <th>Position</th>
-    <th>User</th>
-    <th>Total Points</th>
-  </tr>
-  `).join('');
-}
-
-      const result = Object.entries(scores)
-        .map(([name, totalPoints]) => ({
-          name,
-          points: totalPoints,
-          correct: correctCounts[name] || 0
-        }))
-        .sort((a, b) => b.points - a.points);
-
-      board.innerHTML = result.map((user, index) => `
-        <tr>
-          <td>${index + 1}</td>
-          <td>${user.name}</td>
-          <td>${user.points}</td>
-        </tr>
-      `).join('');
+        if (!scores[name]) scores[name] = 0;
+        scores[name] += points;
+      });
     }
 
-    loadLeaderboard();
-  </script>
+    const result = Object.entries(scores)
+      .map(([name, totalPoints]) => ({
+        name,
+        points: totalPoints
+      }))
+      .sort((a, b) => b.points - a.points);
+
+    console.log("Leaderboard result:", result);
+
+    if (result.length === 0) {
+      board.innerHTML = `<tr><td colspan="3">No picks data found.</td></tr>`;
+      return;
+    }
+
+    board.innerHTML = result.map((user, index) => `
+      <tr>
+        <td>${index + 1}</td>
+        <td>${user.name}</td>
+        <td>${user.points}</td>
+      </tr>
+    `).join('');
+
+  } catch (error) {
+    console.error("Error loading leaderboard:", error);
+    board.innerHTML = `<tr><td colspan="3">Error loading leaderboard.</td></tr>`;
+  }
+}
+
+loadLeaderboard();
+</script>
 </body>
 </html>
