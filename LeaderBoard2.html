@@ -54,68 +54,78 @@
 </head>
 <body>
   <a href="pick.html" class="back-button">← Back to Picks</a>
-  <h1>Today's Leaderboard</h1>
-  <table id="leaderboardTable">
-    <thead>
-      <tr>
-        <th>User</th>
-        <th>Pick</th>
-        <th>Submitted At</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- Rows will be inserted here -->
-    </tbody>
-  </table>
+ <h1>Overall Leaderboard</h1>
+<table id="leaderboardTable">
+  <thead>
+    <tr>
+      <th>User</th>
+      <th>Points</th>
+    </tr>
+  </thead>
+  <tbody>
+    <!-- Rows will be inserted here -->
+  </tbody>
+</table>
 
-  <script>
-    const db = firebase.firestore();
-    const auth = firebase.auth();
+ <script>
+  const db = firebase.firestore();
+  const auth = firebase.auth();
 
-   auth.onAuthStateChanged(async user => {
-  if (!user) {
-    window.location.href = "index.html";
-    return;
-  }
-
-  const today = new Date().toISOString().split('T')[0];
-  console.log("Looking for picks on:", today); // ✅ Log the date
-  const tableBody = document.querySelector('#leaderboardTable tbody');
-
-  try {
-    const snapshot = await db.collection('picks').doc(today).collection('users').orderBy('timestamp').get();
-    console.log("Snapshot size:", snapshot.size); // ✅ Log snapshot
-
-    if (snapshot.empty) {
-      tableBody.innerHTML = '<tr><td colspan="3">No picks yet today.</td></tr>';
+  auth.onAuthStateChanged(async user => {
+    if (!user) {
+      window.location.href = "index.html";
       return;
     }
 
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      const row = document.createElement('tr');
+    const tableBody = document.querySelector('#leaderboardTable tbody');
+    const userPointsMap = {};
 
-      const nameCell = document.createElement('td');
-      nameCell.textContent = data.name || 'Anonymous';
+    try {
+      const picksCollection = await db.collection('picks').get();
 
-      const pickCell = document.createElement('td');
-      pickCell.textContent = data.cyclist || 'N/A';
+      for (const stageDoc of picksCollection.docs) {
+        const usersSnap = await db.collection('picks').doc(stageDoc.id).collection('users').get();
 
-      const timeCell = document.createElement('td');
-      const ts = data.timestamp?.toDate();
-      timeCell.textContent = ts ? ts.toLocaleTimeString() : 'Unknown';
+        usersSnap.forEach(doc => {
+          const data = doc.data();
+          const name = data.name || 'Anonymous';
+          const points = data.points || 0;
 
-      row.appendChild(nameCell);
-      row.appendChild(pickCell);
-      row.appendChild(timeCell);
+          if (!userPointsMap[name]) {
+            userPointsMap[name] = 0;
+          }
 
-      tableBody.appendChild(row);
-    });
-  } catch (error) {
-    console.error("Error loading leaderboard:", error); // ⛳ Now logs full error
-    tableBody.innerHTML = '<tr><td colspan="3">Error loading leaderboard data.</td></tr>';
-  }
-});
-  </script>
+          userPointsMap[name] += points;
+        });
+      }
+
+      // Convert to sorted array
+      const sortedUsers = Object.entries(userPointsMap)
+        .sort((a, b) => b[1] - a[1]); // Descending order
+
+      sortedUsers.forEach(([name, points]) => {
+        const row = document.createElement('tr');
+
+        const nameCell = document.createElement('td');
+        nameCell.textContent = name;
+
+        const pointsCell = document.createElement('td');
+        pointsCell.textContent = points;
+
+        row.appendChild(nameCell);
+        row.appendChild(pointsCell);
+        tableBody.appendChild(row);
+      });
+
+      if (sortedUsers.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="2">No points data found.</td></tr>';
+      }
+
+    } catch (error) {
+      console.error("Error loading leaderboard:", error);
+      tableBody.innerHTML = '<tr><td colspan="2">Error loading leaderboard data.</td></tr>';
+    }
+  });
+</script>
 </body>
 </html>
