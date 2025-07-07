@@ -1,86 +1,154 @@
+<!DOCTYPE html>
 <html>
 <head>
-  <title>Admin Panel</title>
+  <title>Admin - Picks Overview</title>
+  <link rel="stylesheet" href="style.css" />
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
   <script src="firebase-config.js"></script>
   <style>
-    body { font-family: Arial; padding: 20px; }
-    h2 { margin-top: 40px; }
-    .user-pick { margin: 10px 0; }
-    input[type="number"] { width: 60px; }
+    table {
+      width: 90%;
+      margin: 30px auto;
+      border-collapse: collapse;
+      font-family: sans-serif;
+    }
+    th, td {
+      padding: 12px;
+      border: 1px solid #ddd;
+      text-align: center;
+    }
+    th {
+      background-color: #fbc02d;
+    }
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+    h1 {
+      text-align: center;
+    }
+    select, input[type="number"] {
+      padding: 5px;
+      margin: 10px;
+    }
+    button {
+      padding: 6px 12px;
+      background-color: #2196F3;
+      color: white;
+      border: none;
+      cursor: pointer;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
-  <h1>Admin: Assign Points</h1>
-  <label for="stage">Stage Date (YYYY-MM-DD): </label>
-  <select id="stage"></select>
-  <button onclick="loadPicks()">Load Picks</button>
+  <h1>Admin Panel: All Picks</h1>
 
-  <div id="picks-section"></div>
+  <div style="text-align: center">
+    <label for="stageFilter">Filter by Stage:</label>
+    <select id="stageFilter">
+      <option value="">All</option>
+    </select>
+    <button onclick="exportCSV()">Export to CSV</button>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Stage</th>
+        <th>User</th>
+        <th>Cyclist</th>
+        <th>Points</th>
+        <th>Update Points</th>
+      </tr>
+    </thead>
+    <tbody id="picksTableBody"></tbody>
+  </table>
 
   <script>
-
-async function loadStageOptions() {
-  const snapshot = await db.collection("stages").get();
-  const stageSelect = document.getElementById("stage");
-  snapshot.docs.forEach(doc => {
-    const option = document.createElement("option");
-    option.value = doc.id;
-    option.textContent = doc.id;
-    stageSelect.appendChild(option);
-  });
-}
-    
     const db = firebase.firestore();
-    const auth = firebase.auth();
 
-    // Optional: restrict access only to admin user
-    const ADMIN_EMAIL = "diogo.momteiro@gmail.com";
+    async function loadPicks(stageFilter = "") {
+      const tableBody = document.getElementById("picksTableBody");
+      tableBody.innerHTML = "";
+      const stageSet = new Set();
 
-    auth.onAuthStateChanged(user => {
-      if (!user || user.email !== ADMIN_EMAIL) {
-        alert("Access Denied");
-        window.location.href = "index.html";
+      const stagesSnapshot = await db.collection("picks").get();
+      for (const stageDoc of stagesSnapshot.docs) {
+        const stageId = stageDoc.id;
+        if (stageFilter && stageFilter !== stageId) continue;
+        stageSet.add(stageId);
+
+        const usersSnapshot = await db.collection("picks").doc(stageId).collection("users").get();
+        usersSnapshot.forEach(doc => {
+          const data = doc.data();
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${stageId}</td>
+            <td>${data.name}</td>
+            <td>${data.cyclist}</td>
+            <td>${data.points || 0}</td>
+            <td>
+              <input type="number" id="pts-${stageId}-${doc.id}" value="${data.points || 0}" style="width:60px" />
+              <button onclick="updatePoints('${stageId}', '${doc.id}')">Save</button>
+            </td>
+          `;
+          tableBody.appendChild(row);
+        });
       }
-    });
 
-    async function loadPicks() {
-      const date = document.getElementById("stage").value;
-      const container = document.getElementById("picks-section");
-      container.innerHTML = "";
-
-      const snapshot = await db.collection("picks").doc(date).collection("users").get();
-
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        const div = document.createElement("div");
-        div.classList.add("user-pick");
-        div.innerHTML = `
-          <strong>${data.name}</strong> – picked <em>${data.cyclist}</em>
-          | Points: <input type="number" value="${data.points || 0}" id="points-${doc.id}" />
-          <button onclick="savePoints('${date}', '${doc.id}')">Save</button>
-        `;
-        container.appendChild(div);
+      // Populate dropdown
+      const stageFilterEl = document.getElementById("stageFilter");
+      stageFilterEl.innerHTML = '<option value="">All</option>';
+      [...stageSet].sort().forEach(stage => {
+        const option = document.createElement("option");
+        option.value = stage;
+        option.textContent = stage;
+        stageFilterEl.appendChild(option);
       });
     }
 
-    async function savePoints(date, userId) {
-      const points = parseInt(document.getElementById(`points-${userId}`).value);
-      await db.collection("picks").doc(date).collection("users").doc(userId).update({ points });
-      alert("Points saved for user " + userId);
+    async function updatePoints(stageId, userId) {
+      const newPts = parseInt(document.getElementById(`pts-${stageId}-${userId}`).value);
+      if (isNaN(newPts)) return alert("Invalid number");
+
+      await db.collection("picks").doc(stageId).collection("users").doc(userId).update({
+        points: newPts
+      });
+      alert("Points updated.");
+      loadPicks(document.getElementById("stageFilter").value);
     }
 
-    auth.onAuthStateChanged(user => {
-  if (!user || user.email !== ADMIN_EMAIL) {
-    alert("Access Denied");
-    window.location.href = "index.html";
-  } else {
-    loadStageOptions();
-  }
-});
-    
+    function exportCSV() {
+      const rows = document.querySelectorAll("#picksTableBody tr");
+      let csv = "Stage,User,Cyclist,Points\n";
+      rows.forEach(row => {
+        const cells = row.querySelectorAll("td");
+        const data = Array.from(cells).map(cell => cell.textContent.trim()).join(",");
+        csv += data + "\n";
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'picks.csv';
+      a.click();
+    }
+
+    document.getElementById("stageFilter").addEventListener("change", function () {
+      loadPicks(this.value);
+    });
+
+    firebase.auth().onAuthStateChanged(user => {
+      if (!user) {
+        alert("You must be logged in to view this page.");
+        window.location.href = "index.html";
+      } else {
+        loadPicks();
+      }
+    });
   </script>
 </body>
 </html>
