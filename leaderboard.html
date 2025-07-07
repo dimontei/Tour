@@ -138,53 +138,33 @@
   const db = firebase.firestore();
   const board = document.getElementById('leaderboard-body');
 
-  
   async function loadLeaderboard() {
     const scores = {};
-    const correctCounts = {};
- 
-    // Get all stage documents
-    const stagesSnapshot = await db.collection("picks").get();
-    console.log("Stages found:", stagesSnapshot.size);
-    
-    if (stagesSnapshot.empty) {
-      board.innerHTML = `<tr><td colspan="4">No stage data found.</td></tr>`;
+
+    // Fetch all stage documents under "picks"
+    const picksSnapshot = await db.collection("picks").get();
+
+    if (picksSnapshot.empty) {
+      board.innerHTML = `<tr><td colspan="3">No stage data found.</td></tr>`;
       return;
     }
 
-    for (const stageDoc of stagesSnapshot.docs) {
+    for (const stageDoc of picksSnapshot.docs) {
       const stageId = stageDoc.id;
-
-      // Get winner from matching document in 'stages' collection
-      const stageData = await db.collection("stages").doc(stageId).get();
-      const winner = stageData.exists ? stageData.data().winner?.toLowerCase() : null;
-      if (!winner) continue;
-
       const usersSnapshot = await db.collection("picks").doc(stageId).collection("users").get();
 
       usersSnapshot.forEach(doc => {
         const data = doc.data();
-        const { name, cyclist, points = 1 } = data;
-        if (!name || !cyclist) return;
+        const { name, points = 0 } = data;
+        if (!name) return;
 
-        if (!scores[name]) {
-          scores[name] = 0;
-          correctCounts[name] = 0;
-        }
-
-        if (cyclist.toLowerCase() === winner) {
-          scores[name] += points;
-          correctCounts[name]++;
-        }
+        if (!scores[name]) scores[name] = 0;
+        scores[name] += points;
       });
     }
 
     const result = Object.entries(scores)
-      .map(([name, totalPoints]) => ({
-        name,
-        points: totalPoints,
-        correct: correctCounts[name] || 0
-      }))
+      .map(([name, totalPoints]) => ({ name, points: totalPoints }))
       .sort((a, b) => b.points - a.points);
 
     board.innerHTML = result.length
@@ -192,11 +172,10 @@
         <tr>
           <td>${index + 1}</td>
           <td>${user.name}</td>
-          <td>${user.correct}</td>
           <td>${user.points}</td>
         </tr>
       `).join('')
-      : `<tr><td colspan="4">No valid picks found.</td></tr>`;
+      : `<tr><td colspan="3">No points found.</td></tr>`;
   }
 
   loadLeaderboard();
