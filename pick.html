@@ -98,38 +98,49 @@
   </form>
 
   <script>
-   async function submitPick() {
-  const stageId = getTodayDate(); // or dropdown
+  async function submitPick() {
+  const stageId = getTodayDate(); // Or use dropdown if you implemented it
   const cyclist = document.getElementById("cyclist").value.trim();
   const user = firebase.auth().currentUser;
 
   if (!cyclist || !user) {
-    alert("Please enter a cyclist and login.");
+    alert("Please enter a cyclist and ensure you're logged in.");
+    console.warn("Missing cyclist or user not logged in:", cyclist, user);
     return;
   }
+
+  console.log(`Checking if ${cyclist} is already picked for stage ${stageId}`);
 
   const userRef = db.collection("picks").doc(stageId).collection("users").doc(user.uid);
 
-  // Check if this cyclist has already been picked by someone else
-  const picksSnapshot = await db.collection("picks").doc(stageId).collection("users").get();
-  const alreadyPicked = picksSnapshot.docs.some(doc => {
-    const data = doc.data();
-    return data.cyclist.toLowerCase() === cyclist.toLowerCase() && doc.id !== user.uid;
-  });
+  try {
+    const picksSnapshot = await db.collection("picks").doc(stageId).collection("users").get();
+    let alreadyPicked = false;
 
-  if (alreadyPicked) {
-    alert(`${cyclist} has already been picked by another user for this stage.`);
-    return;
+    picksSnapshot.forEach(doc => {
+      const data = doc.data();
+      if (data.cyclist.toLowerCase() === cyclist.toLowerCase() && doc.id !== user.uid) {
+        alreadyPicked = true;
+      }
+    });
+
+    if (alreadyPicked) {
+      alert(`${cyclist} has already been picked by another user.`);
+      return;
+    }
+
+    console.log("Saving pick...");
+    await userRef.set({
+      name: user.displayName,
+      cyclist: cyclist,
+      points: 0
+    });
+
+    alert("Pick saved!");
+  } catch (error) {
+    console.error("Error saving pick:", error);
+    alert("Something went wrong. Check console for error.");
   }
-
-  // Save the user's pick
-  await userRef.set({
-    name: user.displayName,
-    cyclist: cyclist,
-    points: 0 // default
-  });
-
-  alert("Pick saved!");
 }
   </script>
   <!-- Leaderboard Button -->
