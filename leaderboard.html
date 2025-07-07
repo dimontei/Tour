@@ -137,31 +137,41 @@
     const db = firebase.firestore();
     const board = document.getElementById('leaderboard-body');
 
-    async function loadLeaderboard() {
-      const scores = {};
-      const correctCounts = {};
+   async function loadLeaderboard() {
+  const scores = {};
+  const correctCounts = {};
 
-      const stagesSnapshot = await db.collection('stages').get();
+  const stagesSnapshot = await db.collection('picks').get();
 
-      for (const stageDoc of stagesSnapshot.docs) {
-        const stageId = stageDoc.id;
-        const winner = stageDoc.data().winner;
+  for (const stageDoc of stagesSnapshot.docs) {
+    const stageId = stageDoc.id;
 
-        const picksSnapshot = await db.collection('picks').doc(stageId).collection('users').get();
+    const usersSnapshot = await db.collection('picks').doc(stageId).collection('users').get();
+    usersSnapshot.forEach(doc => {
+      const data = doc.data();
+      const { name, points = 0 } = data;
 
-        picksSnapshot.forEach(doc => {
-          const data = doc.data();
-          const { name, cyclist, points = 1 } = data;
+      if (!scores[name]) scores[name] = 0;
+      scores[name] += points;
+    });
+  }
 
-          if (!scores[name]) scores[name] = 0;
-          if (!correctCounts[name]) correctCounts[name] = 0;
+  const result = Object.entries(scores)
+    .map(([name, totalPoints]) => ({
+      name,
+      points: totalPoints,
+      correct: "N/A" // Optional: remove this if you're not tracking correct picks
+    }))
+    .sort((a, b) => b.points - a.points);
 
-          if (cyclist && winner && cyclist.toLowerCase() === winner.toLowerCase()) {
-            scores[name] += points;
-            correctCounts[name]++;
-          }
-        });
-      }
+  board.innerHTML = result.map((user, index) => `
+   <tr>
+    <th>Position</th>
+    <th>User</th>
+    <th>Total Points</th>
+  </tr>
+  `).join('');
+}
 
       const result = Object.entries(scores)
         .map(([name, totalPoints]) => ({
@@ -175,7 +185,6 @@
         <tr>
           <td>${index + 1}</td>
           <td>${user.name}</td>
-          <td>${user.correct}</td>
           <td>${user.points}</td>
         </tr>
       `).join('');
