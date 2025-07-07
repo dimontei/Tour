@@ -138,24 +138,15 @@
   const db = firebase.firestore();
   const board = document.getElementById('leaderboard-body');
 
-   function getTodayDate() {
-      const today = new Date();
-      const yyyy = today.getFullYear();
-      const mm = String(today.getMonth() + 1).padStart(2, '0');
-      const dd = String(today.getDate()).padStart(2, '0');
-      return `${yyyy}-${mm}-${dd}`;
-    }
-
+  
   async function loadLeaderboard() {
     const scores = {};
     const correctCounts = {};
-    const stageId = getTodayDate();
+ 
     // Get all stage documents
-    const stagesSnapshot = await db.collection("picks").doc(stageId).get();
+    const stagesSnapshot = await db.collection("picks").get();
     console.log("Stages found:", stagesSnapshot.size);
     
-//stagesSnapshot.forEach(doc => console.log("Stage ID:", doc.id));
-
     if (stagesSnapshot.empty) {
       board.innerHTML = `<tr><td colspan="4">No stage data found.</td></tr>`;
       return;
