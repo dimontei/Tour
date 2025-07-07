@@ -6,6 +6,45 @@
  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="firebase-config.js"></script>
+  <!-- ✅ CSS for Fancy Google Login Button -->
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 100px;
+      background: #f7f7f7;
+    }
+
+    h1 {
+      font-size: 28px;
+      margin-bottom: 30px;
+    }
+
+    .google-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 20px;
+      border: none;
+      background-color: white;
+      border-radius: 6px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+
+    .google-btn img {
+      width: 20px;
+      height: 20px;
+    }
+
+    .google-btn:hover {
+      box-shadow: 0 4px 6px rgba(0,0,0,0.25);
+      transform: scale(1.02);
+    }
+  </style>
 </head>
 <body>
   <h1>Tour de France 2025 Predictor</h1>
@@ -17,13 +56,18 @@
  
 
   <script>
-    const auth = firebase.auth();
-    function login() {
+    // Google login function
+    document.getElementById("login-btn").addEventListener("click", function () {
       const provider = new firebase.auth.GoogleAuthProvider();
-      auth.signInWithPopup(provider).then(() => {
-        window.location.href = "pick.html";
-      });
-    }
+      firebase.auth().signInWithPopup(provider)
+        .then((result) => {
+          // Redirect or show message
+          window.location.href = "pick.html"; // ✅ go to main game page
+        })
+        .catch((error) => {
+          console.error("Login failed:", error.message);
+        });
+    });
   </script>
 </body>
 </html>
