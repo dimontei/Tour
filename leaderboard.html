@@ -91,7 +91,9 @@
         picks.forEach(doc => {
           const { name, cyclist } = doc.data();
           if (!scores[name]) scores[name] = 0;
-          if (cyclist.toLowerCase() === winner.toLowerCase()) scores[name]++;
+          if (cyclist.toLowerCase() === winner.toLowerCase()) {
+            scores[name] += doc.data().points || 1; // fallback to 1 if no custom points
+          }
         });
       }
 
