@@ -86,7 +86,9 @@
         const stageId = stageDoc.id;
         console.log("🔎 Checking stage:", stageId);
 
-        const usersSnapshot = await db.collection(`picks/${stageId}/users`).get();
+        //const usersSnapshot = await db.collection(`picks/${stageId}/users`).get();
+        const usersRef = db.collection('picks').doc(stageId).collection('users');
+        const usersSnapshot = await usersRef.get();
         console.log(`👤 Users in stage ${stageId}:`, usersSnapshot.size);
 
         usersSnapshot.forEach(doc => {
