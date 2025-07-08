@@ -68,61 +68,57 @@
 </table>
 
 <script>
-  firebase.auth().onAuthStateChanged(async function(user) {
-    if (!user) {
-      window.location.href = "index.html";
-      return;
-    }
-
-    const db = firebase.firestore();
-    const tableBody = document.querySelector('#leaderboardTable tbody');
-    const userPointsMap = {};
-
-    try {
-      const picksSnapshot = await db.collection('picks').get();
-      console.log("📦 Found stages:", picksSnapshot.size);
-
-      for (let stageDoc of picksSnapshot.docs) {
-        const stageId = stageDoc.id;
-        console.log("🔎 Checking stage:", stageId);
-
-        //const usersSnapshot = await db.collection(`picks/${stageId}/users`).get();
-        const usersRef = db.collection('picks').doc(stageId).collection('users');
-        const usersSnapshot = await usersRef.get();
-        console.log(`👤 Users in stage ${stageId}:`, usersSnapshot.size);
-
-        usersSnapshot.forEach(doc => {
-          const data = doc.data();
-          console.log("➡️ User data:", data);
-
-          const name = data.name || 'Anonymous';
-          const points = data.points || 0;
-
-          if (!userPointsMap[name]) {
-            userPointsMap[name] = 0;
-          }
-          userPointsMap[name] += points;
-        });
-      }
-
-      const sorted = Object.entries(userPointsMap).sort((a, b) => b[1] - a[1]);
-
-      if (sorted.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="2">No points data found.</td></tr>';
+    firebase.auth().onAuthStateChanged(async function(user) {
+      if (!user) {
+        window.location.href = "index.html";
         return;
       }
 
-      sorted.forEach(([name, points]) => {
-        const row = document.createElement('tr');
-        row.innerHTML = `<td>${name}</td><td>${points}</td>`;
-        tableBody.appendChild(row);
-      });
+      const db = firebase.firestore();
+      const tableBody = document.querySelector('#leaderboardTable tbody');
+      const userPointsMap = {};
 
-    } catch (err) {
-      console.error("🔥 Error loading leaderboard:", err);
-      tableBody.innerHTML = '<tr><td colspan="2">Error loading leaderboard data.</td></tr>';
-    }
-  });
-</script>
+      try {
+        const stagesSnapshot = await db.collection('picks').get();
+        console.log("📦 Found stages:", stagesSnapshot.size);
+
+        for (let stageDoc of stagesSnapshot.docs) {
+          const stageId = stageDoc.id;
+          console.log("🔎 Checking stage:", stageId);
+
+          const usersSnapshot = await db.collection('picks').doc(stageId).collection('users').get();
+
+          usersSnapshot.forEach(doc => {
+            const data = doc.data();
+            const name = data.name || 'Anonymous';
+            const points = data.points || 0;
+
+            if (!userPointsMap[name]) {
+              userPointsMap[name] = 0;
+            }
+
+            userPointsMap[name] += points;
+          });
+        }
+
+        const sorted = Object.entries(userPointsMap).sort((a, b) => b[1] - a[1]);
+
+        if (sorted.length === 0) {
+          tableBody.innerHTML = '<tr><td colspan="2">No points data found.</td></tr>';
+          return;
+        }
+
+        sorted.forEach(([name, points]) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `<td>${name}</td><td>${points}</td>`;
+          tableBody.appendChild(row);
+        });
+
+      } catch (err) {
+        console.error("🔥 Error loading leaderboard:", err);
+        tableBody.innerHTML = '<tr><td colspan="2">Error loading leaderboard data.</td></tr>';
+      }
+    });
+  </script>
 </body>
 </html>
