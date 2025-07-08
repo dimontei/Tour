@@ -102,30 +102,49 @@
     const auth = firebase.auth();
 
     auth.onAuthStateChanged(user => {
-      if (!user) window.location.href = "index.html";
-
- 
-      const form = document.getElementById('pickForm');
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const cyclist = document.getElementById('cyclist').value;
-        const today = new Date().toISOString().split('T')[0];
-
-
-      if (!cyclist || !user) {
-        alert("Please enter a cyclist and ensure you're logged in.");
+      if (!user) {
+        window.location.href = "index.html";
         return;
       }
 
-        await db.collection('picks').doc(today).collection('users').doc(user.uid).set({
-          name: user.displayName,
-          cyclist: cyclist,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-          points: 0
-        });
+      const form = document.getElementById('pickForm');
 
-        alert("Pick submitted!");
-        form.reset();
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const cyclist = document.getElementById('cyclist').value.trim();
+        const today = new Date().toISOString().split('T')[0];
+
+        if (!cyclist || !user) {
+          alert("Please enter a cyclist and ensure you're logged in.");
+          return;
+        }
+
+        try {
+          const stageRef = db.collection('picks').doc(today);
+          const stageDoc = await stageRef.get();
+
+          // Create the stage document if it doesn't exist
+          if (!stageDoc.exists) {
+            await stageRef.set({
+              createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+          }
+
+          // Save the user's pick
+          await stageRef.collection('users').doc(user.uid).set({
+            name: user.displayName,
+            cyclist: cyclist,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            points: 0
+          });
+
+          alert("Pick submitted!");
+          form.reset();
+
+        } catch (error) {
+          console.error("❌ Error submitting pick:", error);
+          alert("There was an error submitting your pick. Please try again.");
+        }
       });
     });
   </script>
