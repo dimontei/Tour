@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Current Stage Picks</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+  <script src="firebase-config.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 30px;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 12px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #4caf50;
+      color: white;
+    }
+
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    .back-button {
+      margin-bottom: 20px;
+      display: inline-block;
+      text-decoration: none;
+      padding: 10px 20px;
+      background: #764ba2;
+      color: #fff;
+      border-radius: 20px;
+    }
+
+    .back-button:hover {
+      background: #667eea;
+    }
+  </style>
+</head>
+<body>
+  <a href="pick.html" class="back-button">← Back to Home</a>
+  <h1>Latest Stage Picks</h1>
+
+  <table id="picksTable">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Cyclist</th>
+        <th>Points</th>
+        <th>Timestamp</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Rows will be added here -->
+    </tbody>
+  </table>
+
+ <script>
+  const db = firebase.firestore();
+  const auth = firebase.auth();
+  const ADMIN_EMAIL = "admin@example.com"; // 🔒 Replace with your real admin email
+
+  auth.onAuthStateChanged(async (user) => {
+    if (!user) {
+      window.location.href = "index.html";
+      return;
+    }
+
+    const isAdmin = user.email === ADMIN_EMAIL;
+
+    try {
+      const picksSnapshot = await db.collection("picks").get();
+
+      if (picksSnapshot.empty) {
+        document.querySelector('#picksTable tbody').innerHTML = '<tr><td colspan="4">No picks available.</td></tr>';
+        return;
+      }
+
+      const latestStageDoc = picksSnapshot.docs
+        .map(doc => doc.id)
+        .sort()
+        .reverse()[0];
+
+      console.log("📅 Latest stage:", latestStageDoc);
+
+      const usersSnapshot = await db.collection(`picks/${latestStageDoc}/users`).get();
+      const tableBody = document.querySelector("#picksTable tbody");
+      tableBody.innerHTML = '';
+
+      usersSnapshot.forEach(doc => {
+        const data = doc.data();
+        const name = data.name || "Anonymous";
+        const cyclist = data.cyclist || "N/A";
+        const points = data.points ?? 0;
+        const timestamp = data.timestamp?.toDate().toLocaleString() || "N/A";
+
+        const row = document.createElement('tr');
+
+        let pointsCell;
+        if (isAdmin) {
+          pointsCell = `
+            <td>
+              <input type="number" id="points-${doc.id}" value="${points}" style="width:60px" />
+              <button onclick="updatePoints('${latestStageDoc}', '${doc.id}')">Save</button>
+            </td>
+          `;
+        } else {
+          pointsCell = `<td>${points}</td>`;
+        }
+
+        row.innerHTML = `
+          <td>${name}</td>
+          <td>${cyclist}</td>
+          ${pointsCell}
+          <td>${timestamp}</td>
+        `;
+
+        tableBody.appendChild(row);
+      });
+    } catch (error) {
+      console.error("❌ Error fetching current picks:", error);
+      document.querySelector('#picksTable tbody').innerHTML = '<tr><td colspan="4">Error loading picks.</td></tr>';
+    }
+  });
+
+  async function updatePoints(stageId, userId) {
+    const input = document.getElementById(`points-${userId}`);
+    const newPoints = parseInt(input.value);
+
+    if (isNaN(newPoints)) {
+      alert("Please enter a valid number.");
+      return;
+    }
+
+    try {
+      await firebase.firestore().collection(`picks/${stageId}/users`).doc(userId).update({
+        points: newPoints
+      });
+      alert("✅ Points updated!");
+    } catch (err) {
+      console.error("Error updating points:", err);
+      alert("❌ Failed to update points.");
+    }
+  }
+</script>
+</body>
+</html>
